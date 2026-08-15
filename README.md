@@ -28,6 +28,62 @@ from the [Daksh AI Engineer Academy](https://github.com/daksh1403/daksh-ai-engin
 | Typecheck | **mypy** (strict) | Type-safe Python |
 | Container | **Docker** (multi-stage) | The notes' strongest area (★★★★★) |
 | CI/CD | **GitHub Actions** | Pipeline shape from `09_microservices_and_cicd` |
+| Serverless | **Cloudflare Workers (Python) + Durable Objects** | The "Cloudflare" in the name: each Gadget runs as a real Durable Object instance on Workers |
+
+---
+
+## Runs on Cloudflare Workers (the name is earned)
+
+Cloudflare Workers now runs **Python natively** (open beta), and **Durable
+Objects — the exact "one instance per gadget" primitive Cloudflare OS uses —
+are supported in Python**. So this project is a real reference implementation:
+each gadget maps to a `GadgetObject` Durable Object with transactional
+`ctx.storage`, and the platform Worker routes `/gadgets/:id/*` to it.
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  Cloudflare Worker (cloudflare_os/worker.py)             │
+│  · /api/health                                           │
+│  · routes /gadgets/:id/* to the Durable Object           │
+└───────────────┬──────────────────────────────────────────┘
+                │  Durable Object RPC (idFromName -> get)
+    ┌───────────▼──────────────────────┐   ┌──────────────┐
+    │ GadgetObject (per gadget)        │   │ Gatekeeper   │
+    │ · ctx.storage: record, approvals │   │ approvals    │
+    │ · audit log                      │   │ (owner only) │
+    └──────────────────────────────────┘   └──────────────┘
+```
+
+**Locally verified on the Workers runtime** (`wrangler dev`): alice inits and
+owns a gadget, shares with bob as viewer, bob reads (200) but can't write
+(403), strangers/anonymous get 403, non-owners can't approve gatekeeper
+actions. The same domain logic is covered by the pytest TDD suite and behave
+BDD features.
+
+The FastAPI app (`cloudflare_os/main.py`) remains the **local run/test
+runtime** (uvicorn/Docker/pytest/behave); the Worker entrypoint
+(`cloudflare_os/worker.py`) is the deployed surface. Both share the exact same
+`domain/` security logic.
+
+### Deploy
+
+Add two GitHub secrets and the CI `deploy` job deploys on every green push to
+`main`:
+
+- `CLOUDFLARE_API_TOKEN` (token with `Workers Scripts:Edit`)
+- `CLOUDFLARE_ACCOUNT_ID`
+
+Or locally:
+
+```bash
+make worker-install   # installs workers-py + workers-runtime-sdk
+npx wrangler dev      # local Workers runtime (with Durable Objects)
+npx wrangler deploy   # deploy to *.workers.dev
+```
+
+> Python Workers is in open beta: the `python_workers` compatibility flag is
+> required (set in `wrangler.jsonc`), and some Python standard-library modules
+> are unavailable inside the runtime.
 
 ---
 

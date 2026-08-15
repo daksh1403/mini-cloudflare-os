@@ -1,6 +1,7 @@
 # CI/CD pipeline — follows the academy notes' pipeline shape:
 #   lint -> typecheck -> unit tests (TDD) -> BDD tests -> build -> deploy
-# Every push runs the full gate; a green main deploys automatically.
+# Every push runs the full gate; a green main deploys to Cloudflare Workers
+# automatically once CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID are set.
 
 name: ci
 
@@ -66,17 +67,24 @@ jobs:
             ghcr.io/${{ github.repository }}:${{ github.sha }}
 
   deploy:
-    name: Deploy
+    name: Deploy to Cloudflare Workers
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy to staging
+      - name: Install Python + Workers deps
         run: |
-          echo "Staging deploy placeholder — wire to your PaaS/Cloudflare target."
-          echo "Secrets available: ${{ secrets.DEPLOY_TOKEN != '' }}"
+          pip install -e ".[dev,workers]"
 
-      - name: Deploy to production
-        run: echo "Production deploy placeholder — add your deployment target."
+      - name: Deploy to workers.dev
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::warning::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID not set — skipping live deploy."
+            exit 0
+          fi
+          npx wrangler deploy

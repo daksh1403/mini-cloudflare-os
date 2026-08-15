@@ -26,6 +26,13 @@ dev = [
     "ruff>=0.6,<1.0",
     "mypy>=1.10,<2.0",
 ]
+# Cloudflare Workers runtime deps — only needed for the Workers deploy path
+# (worker.py / durable_object.py). They are not imported by the local app,
+# so the standard test gate does not require them.
+workers = [
+    "workers-py>=0.1",
+    "workers-runtime-sdk>=0.1",
+]
 
 [tool.setuptools.packages.find]
 include = ["cloudflare_os*"]
@@ -46,4 +53,8 @@ ignore = ["E501"]
 [tool.mypy]
 python_version = "3.11"
 strict = true
+# The Workers entrypoint + Durable Object import `workers`/`pyodide.ffi`,
+# which only exist inside the Workers runtime. Exclude them from the local
+# strict typecheck; CI deploys them via wrangler which validates them.
 files = ["cloudflare_os", "tests"]
+exclude = ["cloudflare_os/worker.py", "cloudflare_os/durable_object.py"]

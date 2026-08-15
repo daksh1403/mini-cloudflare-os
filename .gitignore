@@ -20,3 +20,7 @@ htmlcov/
 .DS_Store
 *.log
 .env
+
+# ---- Cloudflare Workers local dev ----
+.wrangler/
+.dev.vars
