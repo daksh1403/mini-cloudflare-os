@@ -1,5 +1,7 @@
 # Mini Cloudflare OS
 
+[![CI](https://github.com/daksh1403/mini-cloudflare-os/actions/workflows/ci.yml/badge.svg)](https://github.com/daksh1403/mini-cloudflare-os/actions/workflows/ci.yml)
+
 A small, working implementation of the **Cloudflare OS** concept — sandboxed
 per-user **Gadgets** with **platform-enforced access control** and
 **Gatekeeper-style approvals** — built with the exact stack and discipline
