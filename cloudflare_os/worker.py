@@ -32,6 +32,28 @@ class Default(WorkerEntrypoint):
     async def fetch(self, request: Request) -> Response:
         url = urlparse(request.url)
 
+        if url.path == "/" or url.path == "":
+            return self._json(
+                {
+                    "service": "Mini Cloudflare OS",
+                    "description": "Sandboxed per-user Gadgets with platform-enforced access control.",
+                    "endpoints": {
+                        "GET /api/health": "health check",
+                        "POST /gadgets/:id/init": "create/name a gadget (first caller becomes owner)",
+                        "GET /gadgets/:id/meta": "gadget metadata + ACL",
+                        "POST /gadgets/:id/share": "share with a user (owner only)",
+                        "POST /gadgets/:id/revoke": "revoke a user (owner only)",
+                        "GET /gadgets/:id/data": "read gadget data",
+                        "POST /gadgets/:id/data": "write gadget data",
+                        "POST /gadgets/:id/gatekeeper": "queue a side-effect action for approval",
+                        "GET /gadgets/:id/approvals": "list approvals",
+                        "POST /gadgets/:id/approvals/decide": "approve/reject (owner only)",
+                        "GET /gadgets/:id/audit": "audit log",
+                    },
+                    "auth": "send header x-user-id to identify the caller",
+                }
+            )
+
         if url.path == "/api/health":
             return self._json({"status": "ok"})
 
