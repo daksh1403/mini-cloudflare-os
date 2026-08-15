@@ -42,6 +42,15 @@ include = ["cloudflare_os*"]
 testpaths = ["tests/unit"]
 addopts = "-q --cov=cloudflare_os --cov-report=term-missing"
 
+[tool.coverage.run]
+# Workers-runtime-only modules (import `workers`/`pyodide`; not importable by
+# pytest). They are validated by `wrangler deploy`/`wrangler dev`, not unit
+# tests, so exclude them from the coverage gate.
+omit = [
+    "cloudflare_os/worker.py",
+    "cloudflare_os/durable_object.py",
+]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"
