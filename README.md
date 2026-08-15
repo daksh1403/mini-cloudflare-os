@@ -241,3 +241,4 @@ Dockerfile           # Multi-stage, test-gated build
 - Wire real Gatekeeper targets (Slack, Twitter) behind the approval queue.
 - Add a frontend so a non-technical user can "vibe code" a gadget.
 
+
