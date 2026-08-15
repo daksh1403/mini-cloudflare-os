@@ -1,0 +1,22 @@
+# Mini Cloudflare OS
+# Python stack: FastAPI + pytest + behave + Docker + GitHub Actions.
+# See pyproject.toml for dependencies and tool config.
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# ---- Editor / OS ----
+.DS_Store
+*.log
+.env

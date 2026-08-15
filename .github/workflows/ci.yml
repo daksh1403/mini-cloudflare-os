@@ -1,0 +1,82 @@
+# CI/CD pipeline — follows the academy notes' pipeline shape:
+#   lint -> typecheck -> unit tests (TDD) -> BDD tests -> build -> deploy
+# Every push runs the full gate; a green main deploys automatically.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Lint + TDD + BDD
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev]"
+
+      - name: Lint (ruff)
+        run: ruff check cloudflare_os tests features
+
+      - name: Typecheck (mypy)
+        run: mypy cloudflare_os
+
+      - name: Unit tests (TDD, pytest)
+        run: pytest -q --cov=cloudflare_os --cov-fail-under=80
+
+      - name: BDD tests (behave)
+        run: behave features
+
+  build:
+    name: Build Docker image
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to staging
+        run: |
+          echo "Staging deploy placeholder — wire to your PaaS/Cloudflare target."
+          echo "Secrets available: ${{ secrets.DEPLOY_TOKEN != '' }}"
+
+      - name: Deploy to production
+        run: echo "Production deploy placeholder — add your deployment target."
